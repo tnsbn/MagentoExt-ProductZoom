@@ -1,0 +1,135 @@
+<?php
+
+$_product = $this->getProduct();
+$_helper = $this->helper('catalog/output');
+$isMoreView = Mage::getStoreConfig('chigusa_cloudzoom/moreview/enable');
+$thumbW = Mage::getStoreConfig('chigusa_cloudzoom/moreview/thumbWidth');
+$largeW = Mage::getStoreConfig('chigusa_cloudzoom/moreview/largeWidth');
+$isSlideShow = Mage::getStoreConfig('chigusa_cloudzoom/moreview/slideShow');
+$orient = Mage::getStoreConfig('chigusa_cloudzoom/moreview/orientation');
+?>
+
+<div class="product-slider-wrapper">
+<style type="text/css">
+.dtl_left, .dtl_right, .dtl_up, .dtl_down {
+	position: absolute;
+	float: left;
+	background-color: black;
+	opacity: 0.5;
+}
+.dtl_left img, .dtl_right img, .dtl_up img, .dtl_down img {
+	position: relative;
+	float: left;
+}
+</style>
+
+	<?php
+	$galleryImages = $this->getGalleryImages();
+	if (count($galleryImages) > 1 && 1 == $isMoreView) {
+		if (0 == $isSlideShow) {
+			$gallery = '<div class="product-slider more-views">';
+			foreach ($galleryImages as $_image) {
+				$i++;
+				$gallery .= '<div class="center item">'
+						. '<a id="cloud-zoom-gallery' . $i . '" href="' . $this->helper('catalog/image')->init($this->getProduct(), 'image', $_image->getFile()) . '" '
+						. 'rel="useZoom: \'cloudZoom\', smallImage: \'' . $this->getCloudImage($this->getProduct(), $_image) . '\'" class="cloud-zoom-gallery" title="' . $this->htmlEscape($_image->getLabel()) . '">'
+						. '<img src="' . $this->helper('catalog/image')->init($this->getProduct(), 'thumbnail', $_image->getFile())->keepFrame(false)->resize(85) . '" alt="' . $this->htmlEscape($_image->getLabel()) . '" />'
+						. '</a></div>';
+			}
+			$gallery .= '</div></div>';
+		}else if (1 == $isSlideShow) {
+			$gallery = '<ul id="dtlMoreview">';
+			
+			foreach ($galleryImages as $_image) {
+				$gallery .= '<li>';
+				$gallery .= '<a id="cloud-zoom-gallery' . $i . '" href="' . $this->helper('catalog/image')->init($this->getProduct(), 'image', $_image->getFile()) . '" rel="useZoom: \'cloudZoom\', smallImage: \'' . $this->getCloudImage($this->getProduct(), $_image) . '\'" class="cloud-zoom-gallery hidden" title="' . $this->htmlEscape($_image->getLabel()) . '">';
+				$gallery .= '<img src="' . $this->helper('catalog/image')->init($this->getProduct(), 'thumbnail', $_image->getFile())->keepFrame(false)->resize(85) . '" alt="' . $this->htmlEscape($_image->getLabel()) . '" /></a>';
+				
+				$gallery .= '<img class="etalage_source_image" src="' . $this->helper('catalog/image')->init($this->getProduct(), 'thumbnail', $_image->getFile())->keepFrame(false) . '" alt="' . $this->htmlEscape($_image->getLabel()) . '" />';
+				$gallery .= '<img class="etalage_thumb_image" src="' . $this->helper('catalog/image')->init($this->getProduct(), 'thumbnail', $_image->getFile())->keepFrame(false)->resize($largeW) . '" thumbZoom="' . $this->helper('catalog/image')->init($this->getProduct(), 'thumbnail', $_image->getFile())->keepFrame(false)->resize(250) . '" /> ';
+				$gallery .= '</li>';
+			}
+			$gallery .= '</ul>';
+			
+			// Control panel
+			$gallery .= '<p class="control-panel" style="padding-top: ' . ($orient == 'top' || $orient == 'bottom' ? '10px' : '5px') . '; float:left;">';
+			$gallery .= ' <button type="button" class="button" onclick="dtl_play();"><span>Auto play</span></button>';
+			$gallery .= ' <button type="button" class="button" onclick="dtl_stop();"><span>Stop</span></button>';
+			$gallery .= '</p">';
+			
+			// Navi arrow buttons
+			$gallery .= ' <div class="dtl_left hidden"><img class="button" src="' . $this->getSkinUrl('images/dtl_nav_left.png') . '" onclick="dtl_prev();"></div>';
+			$gallery .= ' <div class="dtl_right hidden"><img class="button" src="' . $this->getSkinUrl('images/dtl_nav_right.png') . '" onclick="dtl_next();"></div>';
+			$gallery .= ' <div class="dtl_up hidden"><img class="button" src="' . $this->getSkinUrl('images/dtl_nav_up.png') . '" onclick="dtl_prev();"></div>';
+			$gallery .= ' <div class="dtl_down hidden"><img class="button" src="' . $this->getSkinUrl('images/dtl_nav_down.png') . '" onclick="dtl_next();"></div>';
+		}
+	}
+	?>
+
+	<?php if ($_product->getImage() != 'no_selection' && $_product->getImage()): ?>
+		<div class="products-thumbs">
+			<div class="center">
+				<a rel="<?php echo $this->renderCloudOptions(); ?>" <?php echo $this->renderLightboxOptions(); ?> gallery="<?php echo $this->helper('catalog/image')->init($_product, 'image'); ?>" href="<?php echo $this->helper('catalog/image')->init($_product, 'image'); ?>" class="cloud-zoom" id="cloudZoom">
+					<?php
+					$_img = '<img id="image" src="' . $this->getCloudImage($_product)->keepFrame(false) . '" alt="' . $this->htmlEscape($this->getImageLabel()) . '" title="' . $this->htmlEscape($this->getImageLabel()) . '" />';
+					echo $_helper->productAttribute($_product, $_img, 'image');
+					?>
+				</a>
+			</div>
+		</div>
+		<?php if (isset($gallery)): ?>
+			<?php echo $gallery; ?>
+		<?php endif; ?>
+	<?php else: ?>
+		<div class="products-thumbs">
+			<div class="center">
+				<?php
+				$_img = '<img src="' . $this->helper('catalog/image')->init($_product, 'image')->resize(265) . '" alt="' . $this->htmlEscape($this->getImageLabel()) . '" title="' . $this->htmlEscape($this->getImageLabel()) . '" />';
+				echo $_helper->productAttribute($_product, $_img, 'image');
+				?>
+			</div>
+		</div>
+	<?php endif; ?>
+</div>
+	
+<script>
+<?php if (count($galleryImages) > 1 && 1 == $isMoreView): ?>
+var dtlInstance;
+function dtl_play() {
+	dtlInstance.trigger("dtl_play");
+}
+
+function dtl_stop() {
+	dtlInstance.trigger("dtl_stop");
+}
+
+function dtl_prev() {
+	dtlInstance.trigger("dtl_prev");
+}
+
+function dtl_next() {
+	dtlInstance.trigger("dtl_next");
+}
+
+jQuery(document).ready(function() {
+	<?php if (1 == $isSlideShow): ?>
+	dtlInstance = jQuery('#dtlMoreview').dtl({
+		thumb_image_width: 235,
+		thumb_image_height: 235,
+		source_image_width: 900,
+		source_image_height: 900,
+		zoom_area_width: 500,
+		zoom_area_height: 500,
+		zoom_area_distance: 5,
+		small_thumbs: 4,
+		smallthumb_inactive_opacity: 0.5,
+		smallthumbs_position: '<?php echo $orient;?>',
+		show_icon: false,
+		autoplay: false,
+		keyboard: false,
+		zoom_easing: false
+	});
+	<?php endif; ?>
+});
+<?php endif; ?>
+</script>
